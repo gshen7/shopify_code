@@ -1,0 +1,211 @@
+{% unless settings.tipping_options == "Disabled" %}
+<!-- checking if cart has a tip currently -->
+{% assign tip_amount = 0 %}
+{% assign tip_index = -1 %}
+{% for item in cart.items %}
+{% if item.vendor == settings.tipping_vendor %}
+{% assign tip_amount = item.quantity | times:100%}
+{% assign tip_index = forloop.index0 %}
+{% endif %}
+{% endfor %}
+
+{% assign variantId = linklists[settings.tipping_menu].links.first.object.first_available_variant.id %}
+
+<!-- calculate what amounts correspond to what percents -->
+{% assign bases = settings.tipping_bases | replace:' ','' | split: ',' %}
+{% assign amounts = '' | split: '' %}
+{% assign cent_amounts = '' | split: '' %}
+
+{% if settings.tipping_option == "Percent" %}
+
+	{% assign set_percent_in_cart = -1 %}
+	{% for base in bases %}
+
+		{% assign amount = tip_amount | times:-1 | plus:cart.items_subtotal_price | times: 0.01 | times: base | divided_by:100 | floor | split: "," %}
+		{% assign amounts = amounts | concat: amount %}
+
+		{% assign cent_amount = amount | join: '' | plus:0 | times: 100 %}
+		{% if tip_amount == cent_amount %}
+			{% assign set_percent_in_cart = base | plus:0 %}
+		{% endif %}
+
+	{% endfor %}
+
+{%elsif settings.tipping_option == "Amount"%}
+	{% assign set_amount_in_cart = -1 %}
+	{% for base in bases %}
+
+		{% assign cent_amount = base | times: 100 %}
+		{% if tip_amount == cent_amount %}
+			{% assign set_amount_in_cart = base | plus:0 %}
+		{% endif %}
+
+	{% endfor %}
+
+{% endif %}
+
+<div class="cart-subtotal tip-fee {% if tip_index < 0 %}hidden{%endif%}">
+  <span class="cart-subtotal__title">{{ 'cart.general.subtotal' | t }}</span>            
+  <span class="cart-subtotal__price" data-cart-subtotal-less-tip>{{ cart.total_price | minus:tip_amount | money_with_currency }}</span>
+</div>
+
+<div class="cart-subtotal tip-fee {% if tip_index < 0 %}hidden{%endif%}">
+  <span class="cart-subtotal__title">Tip (Thanks for your support!)</span>            
+  <span class="cart-subtotal__price" data-cart-tip-display>{{ tip_amount | money_with_currency }}</span>
+</div>
+
+<hr class="total tip-fee {% if tip_index < 0 %}hidden{%endif%}">
+
+<div class="cart-subtotal">
+  <span class="cart-subtotal__title">Total</span>            
+  <span class="cart-subtotal__price" data-cart-subtotal>{{ cart.total_price | money_with_currency }}</span>
+</div>
+
+{%- capture taxes_shipping_checkout -%}
+{%- if shop.taxes_included and shop.shipping_policy.body != blank -%}
+{{ 'cart.general.taxes_included_and_shipping_policy_html' | t: link: shop.shipping_policy.url }}
+{%- elsif shop.taxes_included -%}
+{{ 'cart.general.taxes_included_but_shipping_at_checkout' | t }}
+{%- elsif shop.shipping_policy.body != blank -%}
+{{ 'cart.general.taxes_and_shipping_policy_at_checkout_html' | t: link: shop.shipping_policy.url }}
+{%- else -%}
+{{ 'cart.general.taxes_and_shipping_at_checkout' | t }}
+{%- endif -%}
+{%- endcapture -%}
+<div class="cart__shipping rte">{{ taxes_shipping_checkout }}</div>
+
+<div class="grid__item text-right"> 
+
+<div class="clearfix">
+
+  <h5>{{ settings.tipping_heading }}</h5>
+  
+  <input class="hidden{% if tip_index == -1 %} active{% endif %} remove-tip" type="radio" name="remove-tip"  value="0" />
+  <label data-cart-tip class="remove-tip__label tip remove-tip" id="remove-tip" amount="0" for="remove-tip">No Tip</label>
+
+  {% if settings.tipping_option == "Percent" %}
+  	{%if set_percent_in_cart > 0 %}
+  		{% assign base_selected = true %}
+  	{%else%}
+  		{% assign base_selected = false %}
+  	{%endif%}
+  {%elsif settings.tipping_option == "Amount"%}
+  	{%if set_amount_in_cart > 0 %}
+  		{% assign base_selected = true %}
+	{%else%}
+  		{% assign base_selected = false %}
+  	{%endif%}
+  {% endif %}
+  
+  <span class="tip-variable-amount">
+    <input class="hidden{% unless base_selected or tip_index == -1 %} active{% endunless %}"  type="radio" name="tip-variable-amount"  value="" />
+    <label data-cart-tip class="tip-variable-amount__label disabled tip" id="tip-variable" for="tip-variable">Custom</label>
+    <input class="tip-variable-amount__input " placeholder="Custom Tip"{% unless tip_index == -1 %} value="{{ tip_amount | money_without_trailing_zeros }}"{% endunless %} type="text" onkeypress="return event.charCode >= 48 && event.charCode <= 57"/>
+  </span>
+
+  {% if settings.tipping_option == "Percent" %}
+    {% for base in bases %}
+      {%assign amount_for = amounts[forloop.index0] | plus:0 %}
+      {% assign base_int = base | plus:0 %}
+      <input class="hidden{% if set_percent_in_cart == base_int and tip_index != -1 %} active{% endif %} tip-fixed" type="radio" name="tip-fixed-{{base}}"/>
+      <label data-cart-tip class="tip {% if amount_for <= 0 %}hidden{% endif %}" id="tip-fixed-{{base}}" amount="{{amounts[forloop.index0]}}" for="tip-fixed-{{base}}">{{base}}% ({{ amounts[forloop.index0] | times:100 | money_without_trailing_zeros }})</label>
+    {% endfor %}
+  {% elsif settings.tipping_option == "Amount" %}
+  	{% for base in bases %}
+      {% assign base_int = base | plus:0 %}
+      <input class="hidden{% if set_amount_in_cart == base_int and tip_index != -1 %} active{% endif %} tip-fixed" type="radio" name="tip-fixed-{{base}}"/>
+      <label data-cart-tip class="tip" id="tip-fixed-{{base}}" amount="{{base}}" for="tip-fixed-{{base}}">${{base}}</label>
+    {% endfor %}
+  {% endif %}
+
+
+</div>
+</div>
+
+<script>
+  theme.strings = {
+    tipping_variant: {{ variantId | default: '' | json }}
+  }
+</script>
+
+<style> 
+  .hidden {
+    display: none !important;
+  }
+  .tip {
+    box-sizing: border-box;
+    position: relative;
+    float: right;
+    margin: 0 10px 10px 0;
+    background-color: #{{settings.tipping_inactive_color}};
+    border: 1px solid #{{settings.tipping_inactive_color}};
+    transition: background-color .5s;
+    color: '#ffffff';  
+    cursor: pointer;
+  }
+  .remove-tip {
+    margin: 0 0px 0px 0 !important;
+  }
+  .tip, .tip-variable-amount__input {
+    box-sizing: border-box;
+    display: inline-block;
+    padding: 8px 12px !important;
+    letter-spacing: 1px;
+    font-weight: 400;
+    font-size: 15px !important;
+    line-height: 22px !important;
+  }
+  .tip-variable-amount {
+    box-sizing: border-box;
+    float: right;
+    margin: 0 10px 10px 0;
+    padding: 0;
+  }
+  .tip-variable-amount .tip-variable-amount__input {
+    float: right;
+    margin-left: -1px;
+  }
+  .tip-variable-amount__label { 
+    box-sizing: border-box; 
+    margin: 0;
+  }
+  .tip-variable-amount__input {
+    box-sizing: border-box;
+    width: 120px !important;
+    height: 40px !important;
+    margin: 0;
+    border: 1px solid #{{settings.tipping_inactive_color}};
+    border-radius: 1px !important;
+  }
+  .tip-variable-amount__input--disabled {  
+    opacity: 0.5;
+  }
+  input:checked ~ .tip-variable-amount__input, 
+  input.active ~ .tip-variable-amount__input {
+    border: 1px solid #{{ settings.tipping_active_color }} !important;
+  }
+  input:checked + .tip, input.active + .tip {
+    background-color: #{{settings.tipping_active_color}};
+    border: 1px solid #{{settings.tipping_active_color}};
+  }
+  .tip:hover {
+    border: 1px solid #{{settings.tipping_inactive_color}};
+    background-color: #{{settings.tipping_hover_color}};
+  }
+  input:checked + .tip:after,
+  input.active + .tip:after {
+    position: absolute;
+    font-size: 12px;
+    top: -2px;
+    right: 4px;
+  }
+
+  form.cart > table {
+    margin-bottom: 10px !important;
+  }
+  hr.total {
+    margin: 10px 0px !important;
+  }
+
+</style>
+{%endunless%}
