@@ -18,4 +18,5 @@ Feel free to create an issue if you'd like support with adding these to your Sho
 ---
 
 If you found this helpful, and want to support me, consider buying me a coffee!
+
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U7U81Q15P)
