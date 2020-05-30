@@ -10,3 +10,12 @@ In the `tipping` folder, you'll find [instructions](/tipping/tipping_instruction
 ![UI for shipping](/shipping/ship.png)
 
 In the `shipping` folder, you'll find [instructions](/shipping/shipping_instructions.md) to add buttons that allow for a check to occur before the checkout button is presented. Note that this can be easily bypassed by navigating directly to the checkout url, or by modifying the page via a browser's developer tools. Also Shopify recently launched in my opinion, better local shipping restriction options in their checkout pages. However, I am making this available regardless, as it provides the shipping checker in the cart page instead, and also could be easily adapted to check for some other user input.
+
+---
+
+Feel free to create an issue if you'd like support with adding these to your Shopify theme.
+
+---
+
+If you found this helpful, and want to support me, consider buying me a coffee!
+[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U7U81Q15P)
