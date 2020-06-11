@@ -1,5 +1,5 @@
 # `shopifyAPI` python library notes
-This repository contains various notes I made on the topic of the `shopifyAPI` python library as I wasn't able to find a reference online that contained extensive information about what functions were available.
+This repository contains various notes I made on the topic of the `shopifyAPI` python library as I wasn't able to find a reference online that contained extensive information about what functions were available. These notes can be found in the `pythonLib` folder.
 
 # Add functionality to the cart page
 This repository also contains instructions for adding two features to Shopify cart pages. These instructions will require changes to be made to the code for the theme, so I would recommend duplicating the theme before as a backup. Once the changes are made to the code though, it can be configured from the theme settings afterward. Also note that these changes are for the Debut theme, and have not been tested with other themes. 
